@@ -1,10 +1,5 @@
 package controller;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttSecurityException;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,8 +8,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttSecurityException;
+
 public class Logger {
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static Connection con = null;
 	public static LinkedList<String> loglist = new LinkedList<>();
 	public static MqttClient client = null;
@@ -40,7 +40,7 @@ public class Logger {
 				con.close();
 			}
 		} catch (SQLException e) {
-			System.out.println("Con schie�en fehlgeschlagen");
+			System.out.println("Con schießen fehlgeschlagen");
 			e.printStackTrace();
 		}
 	}

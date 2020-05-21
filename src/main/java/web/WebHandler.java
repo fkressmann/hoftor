@@ -1,15 +1,16 @@
 package web;
 
-import controller.Control;
-import controller.Logger;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
+
+import controller.Control;
+import controller.Logger;
 
 @WebServlet("/Webui")
 public class WebHandler extends HttpServlet {
@@ -25,35 +26,24 @@ public class WebHandler extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		switch (request.getParameter("action")) {
-			case "openDoor":
-				Control.openDoor(getAuth(request), false);
-				break;
-			case "closeDoor":
-				Control.closeDoor(getAuth(request), false);
-				break;
-			case "autoCloseDoor":
-				Control.autoCloseDoor(getAuth(request), false);
-				break;
-			case "stopDoor":
-				Control.stopDoor(getAuth(request), false);
-				break;
-			case "openAutoCloseDoor":
-				Control.openAutoCloseDoor(getAuth(request), false);
-				break;
-			case "test":
-				Logger.log("Test. Message: " + request.getParameter("message"));
-				break;
-			case "lock":
-				if (request.getParameter("state").equals("true")) {
-					Control.state[Control.LOCKED] = 1;
-				} else if (request.getParameter("state").equals("false")) {
-					Control.state[Control.LOCKED] = 0;
-				}
-				break;
-			case "kill-auto":
-				Control.killAuto(getAuth(request));
-				break;
+		if (request.getParameter("action").equals("openDoor")) {
+			Control.openDoor(getAuth(request), false);
+		} else if (request.getParameter("action").equals("closeDoor")) {
+			Control.closeDoor(getAuth(request), false);
+		} else if (request.getParameter("action").equals("stopDoor")) {
+			Control.stopDoor(getAuth(request), false);
+		} else if (request.getParameter("action").equals("openAutoCloseDoor")) {
+			Control.openAutoCloseDoor(getAuth(request), false);
+		} else if (request.getParameter("action").equals("test")) {
+			Logger.log("Test. Message: " + request.getParameter("message"));
+		} else if (request.getParameter("action").equals("lock")) {
+			if (request.getParameter("state").equals("true")) {
+				Control.state[Control.LOCKED] = 1;
+			} else if (request.getParameter("state").equals("false")) {
+				Control.state[Control.LOCKED] = 0;
+			}
+		} else if (request.getParameter("action").equals("kill-auto")) {
+			Control.killAuto(getAuth(request));
 		}
 
 		StringBuilder info = new StringBuilder("<state>\n" + "<gate>" + Control.state[Control.GATE] + "</gate>\n"

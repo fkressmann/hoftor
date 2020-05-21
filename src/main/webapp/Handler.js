@@ -134,12 +134,6 @@ function openAutoCloseDoor() {
 	xmlHttpRequest.send(null);
 }
 
-function autoCloseDoor() {
-	xmlHttpRequest.open("Get", "/Hoftor/Webui?action=autoCloseDoor", true);
-	xmlHttpRequest.onreadystatechange = printInfo;
-	xmlHttpRequest.send(null);
-}
-
 function stopDoor() {
 	xmlHttpRequest.open("Get", "/Hoftor/Webui?action=stopDoor", true);
 	xmlHttpRequest.onreadystatechange = printInfo;
