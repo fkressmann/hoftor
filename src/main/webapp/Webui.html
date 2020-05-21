@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Hoftorsteuerung</title>
+<script src="Handler.js"></script>
+</head>
+
+<body>
+	<div class="container-fluid">
+		<h1>Hoftorsteuerung</h1>
+		<div class="row" id="state">
+			<h2>Sensorstatus</h2>
+			<div class="alert alert-info" id="gate">Warte auf Daten...</div>
+			<div class="alert alert-info" id="door">Warte auf Daten...</div>
+			<div class="alert alert-info" id="lb">Warte auf Daten...</div>
+			<div class="alert alert-info" id="temp">Warte auf Temperatur...
+			</div>
+		</div>
+		<div class="row" id="control">
+			<h2>Steuerung</h2>
+			<div class="btn-group" id="open">
+				<input type="button" class="btn btn-primary" value="Tor öffnen"
+					onClick="openDoor()"> 
+				<input type="button" class="btn btn-primary" value="Tor auto-öffnen"
+					onClick="openAutoCloseDoor()">
+			</div>
+			<div id="lock">
+				<input type="button" class="btn btn-info" value="Öffnen sperren"
+					onClick="lockDoor()">
+			</div>
+			<div id="unlock">
+				<input type="button" class="btn btn-danger" value="Öffnen entsperren"
+					onClick="unlockDoor()">
+			</div>
+			<div id="close">
+				<input type="button" class="btn btn-success" value="Tor jetzt schließen"
+					onClick="closeDoor()">
+				<input type="button" class="btn btn-success" value="Tor auto-schließen"
+					   onClick="autoCloseDoor()">
+			</div>
+			<div id="stop">
+				<input id ="stopButton" type="button" class="btn btn-danger" value="Anhalten"
+					onClick="stopDoor()">
+			</div>
+			<div id="kill-auto">
+				<input type="button" class="btn btn-danger" value="Automatik deaktivieren"
+					onClick="killAuto()">
+			</div>
+		</div>
+		<div class="row">
+			<h2>Info</h2>
+			<div class="well" class="col-sm-4" id="info">Warte auf Info...
+			</div>
+		</div>
+		<div class="row">
+			<a href="/html/logout" class="btn btn-info" role="button">Abmelden</a>
+		</div>
+	</div>
+</body>
+</html>

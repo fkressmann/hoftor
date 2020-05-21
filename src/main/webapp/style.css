@@ -1,0 +1,20 @@
+.row {
+	margin-left: initial;
+	margin-right: initial;
+}
+
+div.alert {
+	display: inline-block;
+	-webkit-tansition: ease-in-out 0.3s all;
+	tansition: ease-in-out 0.3s all;
+}
+
+@media ( max-width :350px) {
+	#state div.alert {
+		padding: 10px;
+		margin-bottom: 10px;
+	}
+	#state div.btn {
+		padding: 5px;
+	}
+}
