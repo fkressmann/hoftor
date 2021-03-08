@@ -24,33 +24,45 @@ public class WebHandler extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+			throws IOException {
 
-		if (request.getParameter("action").equals("openDoor")) {
-			Control.openDoor(getAuth(request), false);
-		} else if (request.getParameter("action").equals("closeDoor")) {
-			Control.closeDoor(getAuth(request), false);
-		} else if (request.getParameter("action").equals("stopDoor")) {
-			Control.stopDoor(getAuth(request), false);
-		} else if (request.getParameter("action").equals("openAutoCloseDoor")) {
-			Control.openAutoCloseDoor(getAuth(request), false);
-		} else if (request.getParameter("action").equals("test")) {
-			Logger.log("Test. Message: " + request.getParameter("message"));
-		} else if (request.getParameter("action").equals("lock")) {
-			if (request.getParameter("state").equals("true")) {
-				Control.state[Control.LOCKED] = 1;
-			} else if (request.getParameter("state").equals("false")) {
-				Control.state[Control.LOCKED] = 0;
-			}
-		} else if (request.getParameter("action").equals("kill-auto")) {
-			Control.killAuto(getAuth(request));
+		switch (request.getParameter("action")) {
+			case "openDoor":
+				Control.openDoor(getAuth(request), false);
+				break;
+			case "closeDoor":
+				Control.closeDoor(getAuth(request), false);
+				break;
+			case "stopDoor":
+				Control.stopDoor(getAuth(request), false);
+				break;
+			case "openAutoCloseDoor":
+				Control.openAutoCloseDoor(getAuth(request), false);
+				break;
+			case "test":
+				Logger.log("Test. Message: " + request.getParameter("message"));
+				break;
+			case "lock":
+				if (request.getParameter("state").equals("true")) {
+					Control.gate.lock();
+				} else if (request.getParameter("state").equals("false")) {
+					Control.gate.unlock();
+				}
+				break;
+			case "kill-auto":
+				Control.killAuto(getAuth(request));
+				break;
 		}
 
-		StringBuilder info = new StringBuilder("<state>\n" + "<gate>" + Control.state[Control.GATE] + "</gate>\n"
-				+ "<door>" + Control.state[Control.DOOR] + "</door>\n" + "<lb>" + Control.state[Control.LB] + "</lb>\n"
-				+ "<moving>" + Control.state[Control.MOVING] + "</moving>\n" + "<auto>" + Control.state[Control.AUTO]
-				+ "</auto>\n" + "<locked>" + Control.state[Control.LOCKED] + "</locked>\n" + "<temp>" + Control.temp
-				+ "</temp>\n" + "<status><![CDATA[");
+		StringBuilder info = new StringBuilder("<state>\n"
+				+ "<gate>" + Control.gate.state + "</gate>\n"
+				+ "<door>" + Control.door.state + "</door>\n"
+				+ "<lb>" + Control.lightbarrier.state + "</lb>\n"
+				+ "<moving>" + Control.gate.isMoving() + "</moving>\n"
+				+ "<auto>" + Control.automaticActive + "</auto>\n"
+				+ "<locked>" + Control.gate.locked + "</locked>\n"
+				+ "<temp>" + Control.temp + "</temp>\n"
+				+ "<status><![CDATA[");
 
 		for (int i = Logger.loglist.size() - 1; i >= 0; i--) {
 			// for (String current : Logger.loglist) {

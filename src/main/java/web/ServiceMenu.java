@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import controller.Control;
 import controller.GpioHandler;
+import model.Status;
 
 @WebServlet("/service")
 public class ServiceMenu extends HttpServlet {
@@ -22,25 +23,30 @@ public class ServiceMenu extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+			throws IOException {
 		String message = null;
 
 		if (request.getParameter("action") != null) {
-			if (request.getParameter("action").equals("sendSignal")) {
-				GpioHandler.toggleGateGpio();
-				message = "Gate GPIO toggled.";
-			} else if (request.getParameter("action").equals("cancelActionThread")) {
-				Control.killAuto(new String[] { "Service", null });
-			} else if (request.getParameter("action").equals("activateLB")) {
-				GpioHandler.activateLbGpio();
-				message = "LB GPIO activated.";
-
-			} else if (request.getParameter("action").equals("deactivateLB")) {
-				GpioHandler.deactivateLbGpio();
-				message = "LB GPIO deactivated.";
-			} else if (request.getParameter("action").equals("reinitialzie")) {
-				Control.initGpioRead();
-				message = "Init GPIO read triggered.";
+			switch (request.getParameter("action")) {
+				case "sendSignal":
+					GpioHandler.toggleGateGpio();
+					message = "Status GPIO toggled.";
+					break;
+				case "cancelActionThread":
+					Control.killAuto(new String[]{"Service", null});
+					break;
+				case "activateLB":
+					GpioHandler.activateLbGpio();
+					message = "LB GPIO activated.";
+					break;
+				case "deactivateLB":
+					GpioHandler.deactivateLbGpio();
+					message = "LB GPIO deactivated.";
+					break;
+				case "reinitialzie":
+					Control.initGpioRead();
+					message = "Init GPIO read triggered.";
+					break;
 			}
 		}
 
@@ -49,20 +55,20 @@ public class ServiceMenu extends HttpServlet {
 
 	}
 
-	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
 
-		Control.state[Control.GATE] = Integer.parseInt(req.getParameter("gate"));
-		Control.state[Control.MOVING] = Integer.parseInt(req.getParameter("moving"));
-		Control.state[Control.DOOR] = Integer.parseInt(req.getParameter("door"));
-		Control.state[Control.LB] = Integer.parseInt(req.getParameter("lb"));
+		Control.gate.state = Status.parse(req.getParameter("gate"));
+		Control.gate.moving = Boolean.parseBoolean(req.getParameter("moving"));
+		Control.door.state = Status.parse(req.getParameter("door"));
+		Control.lightbarrier.state = Status.parse(req.getParameter("lb"));
 		if (req.getParameter("lbW").equals("1")) {
 			GpioHandler.activateLbGpio();
 		} else {
 			GpioHandler.deactivateLbGpio();
 		}
-		String message = "Set \r\nGATE to " + Control.state[Control.GATE] + "\r\n MOVING to "
-				+ Control.state[Control.MOVING] + "\r\n DOOR to " + Control.state[Control.DOOR] + "\r\n LB to "
-				+ Control.state[Control.LB];
+		String message = "Set \r\nGATE to " + Control.gate.state + "\r\n MOVING to "
+				+ Control.gate.moving + "\r\n DOOR to " + Control.door.state + "\r\n LB to "
+				+ Control.lightbarrier.state;
 
 		res.setContentType("text/html;charset=UTF-8");
 		res.getWriter().println(generateHTML(message));
@@ -99,16 +105,16 @@ public class ServiceMenu extends HttpServlet {
 				+ "  <a href=\"service?action=deactivateLB\" class=\"btn btn-info\" role=\"button\">Lichtschranke deaktivieren</a>\r\n"
 				+ "  <p>Achtung, deaktivieren nicht vergessen!</p>\r\n" + "  <h2>Variablen manuell setzen</h2>\r\n"
 				+ "  <form method=\"post\" action=\"service\">\r\n"
-				+ "  <label for=\"gate\">Gate 0=zu 1=auf 2=öffnet 3=schließt:</label>\r\n"
-				+ "  <input type=\"number\" name=\"gate\" maxlength=\"1\" class=\"form-control\" id=\"gate\" value=\""
-				+ Control.state[Control.GATE] + "\" /> <br/>\r\n" + "  <label for=\"moving\">Moving:</label>\r\n"
-				+ "  <input type=\"number\" name=\"moving\" maxlength=\"1\" class=\"form-control\" id=\"moving\" value=\""
-				+ Control.state[Control.MOVING] + "\" /> <br/>\r\n" + "  <label for=\"door\">Door:</label>\r\n"
-				+ "  <input type=\"number\" name=\"door\" maxlength=\"1\" class=\"form-control\" id=\"door\" value=\""
-				+ Control.state[Control.DOOR] + "\" /> <br/>\r\n" + "  <label for=\"lb\">LB:</label>\r\n"
-				+ "  <input type=\"number\" name=\"lb\" maxlength=\"1\" class=\"form-control\" id=\"lb\" value=\""
-				+ Control.state[Control.LB] + "\" /> <br/>\r\n" + "  <label for=\"lbW\">LB-W:</label>\r\n"
-				+ "  <input type=\"number\" name=\"lbW\" maxlength=\"1\" class=\"form-control\" id=\"lbW\" value=\""
+				+ "  <label for=\"gate\">Status 0=zu 1=auf 2=öffnet 3=schließt:</label>\r\n"
+				+ "  <input type=\"text\" name=\"gate\" class=\"form-control\" id=\"gate\" value=\""
+				+ Control.gate.state + "\" /> <br/>\r\n" + "  <label for=\"moving\">Moving:</label>\r\n"
+				+ "  <input type=\"text\" name=\"moving\" class=\"form-control\" id=\"moving\" value=\""
+				+ Control.gate.isMoving() + "\" /> <br/>\r\n" + "  <label for=\"door\">Door:</label>\r\n"
+				+ "  <input type=\"text\" name=\"door\" class=\"form-control\" id=\"door\" value=\""
+				+ Control.door.state + "\" /> <br/>\r\n" + "  <label for=\"lb\">LB:</label>\r\n"
+				+ "  <input type=\"text\" name=\"lb\" class=\"form-control\" id=\"lb\" value=\""
+				+ Control.lightbarrier.state + "\" /> <br/>\r\n" + "  <label for=\"lbW\">LB-W:</label>\r\n"
+				+ "  <input type=\"text\" name=\"lbW\" class=\"form-control\" id=\"lbW\" value=\""
 				+ lbw + "\" /> <br/>\r\n" + "  <input type=\"submit\" name='submit' class=\"btn\" />\r\n"
 				+ "  </form>\r\n" + "</div>\r\n" + "</body>\r\n" + "</html>";
 	}
