@@ -10,7 +10,6 @@ import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import static controller.Control.gate;
@@ -69,10 +68,8 @@ public class GpioHandler {
 					+ " = " + event.getState());
 			if (event.getState().equals(PinState.LOW)) {
 				gate.setClosed();
-				Logger.sendMqtt("gate", "CLOSED");
 			} else if (event.getState().equals(PinState.HIGH)) {
 				gate.setOpening();
-				Logger.sendMqtt("gate", "OPEN");
 			}
 		});
 		Logger.log("---gateClosed in registered---");
@@ -97,10 +94,8 @@ public class GpioHandler {
 					+ event.getState());
 			if (event.getState().equals(PinState.LOW)) {
 				Control.door.setOpen();
-				Logger.sendMqtt("door", "OPEN");
 			} else if (event.getState().equals(PinState.HIGH)) {
 				Control.door.setClosed();
-				Logger.sendMqtt("door", "CLOSED");
 			}
 		});
 		Logger.log("---door in registered---");
@@ -112,12 +107,10 @@ public class GpioHandler {
 				Control.lightbarrier.setOpen();
 				System.out.println(sdf.format(new Date()) + " --> lightbarrier PIN STATE CHANGE: " + event.getPin()
 						+ " = BAD");
-				Logger.sendMqtt("lb", "OPEN");
 			} else if (event.getState().equals(PinState.HIGH)) {
 				Control.lightbarrier.isClosed();
 				System.out.println(sdf.format(new Date()) + " --> lightbarrier PIN STATE CHANGE: " + event.getPin()
 						+ " = GOOD");
-				Logger.sendMqtt("lb", "CLOSED");
 			}
 		});
 		Logger.log("---lightbarrier in registered---");

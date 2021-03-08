@@ -1,5 +1,7 @@
 package controller;
 
+import clients.MqttClient;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -9,7 +11,7 @@ public class MyServletContextListener implements ServletContextListener {
 	public void contextDestroyed(ServletContextEvent arg0) {
 		GpioHandler.gpio.shutdown();
 		Control.tempthread.interrupt();
-		Logger.disconnectMqtt();
+		MqttClient.disconnectMqtt();
 	}
 
 	@Override

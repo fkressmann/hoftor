@@ -2,14 +2,17 @@ package controller;
 
 import model.Gate;
 import model.Sensor;
+import model.User;
+
+import static clients.MqttClient.initMqtt;
 
 public class Control {
 	public static double temp = 0;
 	public static ActionThread actionthread;
 	public static TempThread tempthread;
-	public static Gate gate = new Gate();
-	public static Sensor door = new Sensor();
-	public static Sensor lightbarrier = new Sensor();
+	public static Gate gate = new Gate("gate");
+	public static Sensor door = new Sensor("door");
+	public static Sensor lightbarrier = new Sensor("lb");
 	public static boolean automaticActive = false;
 
 	public static void init() {
@@ -18,6 +21,7 @@ public class Control {
 		actionthread = new ActionThread(ActionThread.Action.START, false);
 		actionthread.start();
 		initGpioRead();
+		initMqtt();
 		Logger.log("Initialisierung abgeschlossen!");
 	}
 
@@ -50,19 +54,19 @@ public class Control {
 
 	// cycleDoor(user, gewünschte Aktion) 0:schließen, 1: öffnen, 2:anhalten
 	public static void cycleDoor() {
-		String[] user = new String[] { "fernbedienung", null };
+		User user = User.remote();
 		String action;
 		if (gate.isClosed() && !gate.isMoving() && !actionthread.isAlive()) {
-			openDoor(user, true);
+			openDoor(user);
 		} else if (!gate.isClosed() && !gate.isMoving() && !actionthread.isAlive()) {
 			if (gate.isClosing()) {
 				Logger.log("Torflügel ist wahrscheinlich von selber zu gegangen. Versuche trotzdem zu schließen");
-				Logger.logAccessSQL(new String[] { "SYSTEM", null },
+				Logger.logAccessSQL(new User("SYSTEM"),
 						"WARNING: Torflügel ist wahrscheinlich von selber zu gegangen. Versuche trotzdem zu schließen");
 			}
-			closeDoor(user, true);
+			closeDoor(user);
 		} else if (gate.isMoving() || actionthread.isAlive()) {
-			stopDoor(user, true);
+			stopDoor(user);
 		} else {
 			action = "--ERROR: States out of bounds: (Status/Moving) " + gate.state + gate.isMoving();
 			Logger.logAccessSQL(user, action);
@@ -71,7 +75,7 @@ public class Control {
 		}
 	}
 
-	public static boolean openDoor(String[] user, boolean fb) {
+	public static boolean openDoor(User user) {
 		if (gate.isLocked()) {
 			Logger.logAccessSQL(user, "openDoor: fail - gate locked");
 			return false;
@@ -82,7 +86,7 @@ public class Control {
 				Logger.logAccessSQL(user, "openDoor: fail - ActionThread alive");
 				return false;
 			} else {
-				actionthread = new ActionThread(ActionThread.Action.OPEN, fb);
+				actionthread = new ActionThread(ActionThread.Action.OPEN, user.isRemote());
 				actionthread.start();
 				Logger.logAccessSQL(user, "openDoor: ok");
 				return true;
@@ -93,12 +97,12 @@ public class Control {
 		}
 	}
 
-	public static boolean openAutoCloseDoor(String[] user, boolean fb) {
+	public static boolean openAutoCloseDoor(User user) {
 		if (gate.isLocked()) {
 			Logger.logAccessSQL(user, "openDoor: fail - gate locked");
 			return false;
 		}
-		if (lightbarrier.isOpen() && !user[0].equals("felix")) {
+		if (lightbarrier.isOpen() && !user.getName().equals("felix")) {
 			Logger.log("Kein Signal von Lichtschranke, Automatik kann nicht gestartet werden.");
 			Logger.logAccessSQL(user, "openAutoClose: No LB signal, not invoked");
 			return false;
@@ -110,7 +114,7 @@ public class Control {
 				return false;
 			} else {
 				automaticActive = true;
-				actionthread = new ActionThread(ActionThread.Action.AUTOCLOSE, user[0]);
+				actionthread = new ActionThread(ActionThread.Action.AUTOCLOSE, user.getName());
 				actionthread.start();
 				Logger.logAccessSQL(user, "openAutoCloseDoor: ok");
 				return true;
@@ -121,19 +125,19 @@ public class Control {
 		}
 	}
 
-	public static boolean closeDoor(String[] user, boolean fb) {
+	public static boolean closeDoor(User user) {
 		if (!gate.isClosed() && !gate.isMoving()) {
 			if (actionthread.isAlive()) {
 				System.out.println("ActionThread active, closeDoor could not be invoked");
 				Logger.logAccessSQL(user, "closeDoor: fail - ActionThread alive");
 				return false;
 			} else {
-				actionthread = new ActionThread(ActionThread.Action.CLOSE, fb);
+				actionthread = new ActionThread(ActionThread.Action.CLOSE, user.isRemote());
 				actionthread.start();
 				Logger.logAccessSQL(user, "closeDoor: ok");
 				if (gate.isClosing()) {
 					Logger.log("Torflügel ist wahrscheinlich von selber zu gegangen. Versuche trotzdem zu schließen");
-					Logger.logAccessSQL(new String[] { "SYSTEM", null },
+					Logger.logAccessSQL(new User("SYSTEM"),
 							"WARNING: Torflügel ist wahrscheinlich von selber zu gegangen. Versuche trotzdem zu schließen");
 				}
 				return true;
@@ -144,14 +148,14 @@ public class Control {
 		}
 	}
 
-	public static boolean stopDoor(String[] user, boolean fb) {
+	public static boolean stopDoor(User user) {
 		if (gate.isMoving()) {
 			if (gate.isClosing()) {
 				if (actionthread.isAlive()) {
 					actionthread.interrupt();
 				}
 				gate.setStill();
-				openDoor(user, false);
+				openDoor(user);
 				return true;
 
 			} else {
@@ -160,7 +164,7 @@ public class Control {
 					GpioHandler.deactivateLbGpio();
 					System.out.println("ActionThread interrupted");
 				}
-				actionthread = new ActionThread(ActionThread.Action.STOP, fb);
+				actionthread = new ActionThread(ActionThread.Action.STOP, user.isRemote());
 				actionthread.start();
 				Logger.logAccessSQL(user, "stopDoor: ok");
 				return true;
@@ -171,7 +175,7 @@ public class Control {
 		}
 	}
 
-	public static boolean killAuto(String[] user) {
+	public static boolean killAuto(User user) {
 		if (actionthread.isAlive()) {
 			actionthread.interrupt();
 			automaticActive = false;

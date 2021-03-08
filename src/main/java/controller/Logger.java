@@ -8,30 +8,27 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 
+import model.User;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 
 public class Logger {
-	private static SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static final SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static Connection con = null;
 	public static LinkedList<String> loglist = new LinkedList<>();
-	public static MqttClient client = null;
 
-	public static Connection createCon() throws SQLException {
+	public static void createCon() throws SQLException {
 		if (con != null && !con.isClosed()) {
-			return con;
+			return;
 		}
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://debian.fritz.box/hoftor?user=hoftor&password=8pjh3pxS89MjskxO");
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
+			con = DriverManager.getConnection("jdbc:mysql://homeassistant.fritz.box/hoftor?user=hoftor&password=8pjh3pxS89MjskxO");
+		} catch (ClassNotFoundException | SQLException e) {
 			e.printStackTrace();
 		}
-		return con;
 	}
 
 	public static void closeCon() {
@@ -45,31 +42,15 @@ public class Logger {
 		}
 	}
 
-	public static void logTempSQL(double temp) {
+	public static void logAccessSQL(User user, String action) {
 		String time = sdf.format(new Date());
 		try {
 			createCon();
-			PreparedStatement psmt = con.prepareStatement("INSERT INTO temperature (date, temp) VALUES (?, ?)");
-			psmt.setString(1, time);
-			psmt.setDouble(2, temp);
-			psmt.executeUpdate();
-			psmt.close();
-			closeCon();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public static void logAccessSQL(String[] user, String action) {
-		String time = sdf.format(new Date());
-		try {
-			createCon();
-			PreparedStatement psmt = con
+			@SuppressWarnings("SqlResolve") PreparedStatement psmt = con
 					.prepareStatement("INSERT INTO actions (date, ip, user, action) VALUES (?, ?, ?, ?)");
 			psmt.setString(1, time);
-			psmt.setString(2, user[1]);
-			psmt.setString(3, user[0]);
+			psmt.setString(2, user.getIp());
+			psmt.setString(3, user.getName());
 			psmt.setString(4, action);
 			psmt.executeUpdate();
 			psmt.close();
@@ -89,39 +70,4 @@ public class Logger {
 		System.out.println(output);
 	}
 
-	public static MqttClient mqttCon() {
-		try {
-			if (client == null) {
-				client = new MqttClient("tcp://debian.fritz.box", "Hoftor");
-			}
-			if (!client.isConnected()) {
-				client.connect();
-			}
-		} catch (MqttSecurityException e) {
-			e.printStackTrace();
-		} catch (MqttException e) {
-			e.getMessage();
-		}
-		return client;
-	}
-
-	public static void sendMqtt(String topic, String input) {
-		try {
-			MqttMessage message = new MqttMessage(input.getBytes());
-			mqttCon().publish("home/outside/input/gate/" + topic, message);
-		} catch (MqttException e) {
-			Logger.log(topic + " MQTT " + input + " konnte nicht gesendet werden.");
-			System.out.println(e.getMessage());
-		}
-
-	}
-
-	public static void disconnectMqtt() {
-		try {
-			client.disconnect();
-			client.close();
-		} catch (MqttException e) {
-			e.printStackTrace();
-		}
-	}
 }

@@ -1,12 +1,12 @@
 package model;
 
-public class Gate extends Sensor{
+public class Gate extends Sensor {
     public boolean moving;
 
     public boolean locked;
 
-    public Gate() {
-        super();
+    public Gate(String mqttPrefix) {
+        super(mqttPrefix);
         this.locked = false;
         this.moving = false;
     }
@@ -25,14 +25,17 @@ public class Gate extends Sensor{
 
     public void setMoving() {
         this.moving = true;
+
     }
 
     public void setOpening() {
         state = Status.OPENING;
+        sendState();
     }
 
     public void setClosing() {
         state = Status.CLOSING;
+        sendState();
     }
 
     public void still(boolean moving) {
