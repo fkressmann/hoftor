@@ -61,7 +61,7 @@ function printSensorStatus() {
 		}
 
 		// Lock und Open Anzeigen wenn zu / gesperrt
-		if (dom.getElementsByTagName("gate")[0].childNodes[0].nodeValue === "OPEN") {
+		if (dom.getElementsByTagName("gate")[0].childNodes[0].nodeValue === "CLOSED") {
 			if (dom.getElementsByTagName("locked")[0].childNodes[0].nodeValue === "false") {
 				document.getElementById("open").style.display = 'block';
 				document.getElementById("unlock").style.display = 'none';

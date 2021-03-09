@@ -9,10 +9,6 @@ import java.util.Date;
 import java.util.LinkedList;
 
 import model.User;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 
 public class Logger {
 	private static final SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -24,9 +20,9 @@ public class Logger {
 			return;
 		}
 		try {
-			Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://homeassistant.fritz.box/hoftor?user=hoftor&password=8pjh3pxS89MjskxO");
-		} catch (ClassNotFoundException | SQLException e) {
+			Class.forName("org.mariadb.jdbc.Driver");
+			con = DriverManager.getConnection("jdbc:mariadb://homeassistant.fritz.box/hoftor?user=hoftor&password=8pjh3pxS89MjskxO");
+		} catch (SQLException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
@@ -55,7 +51,7 @@ public class Logger {
 			psmt.executeUpdate();
 			psmt.close();
 			closeCon();
-		} catch (SQLException e) {
+		} catch (SQLException | NullPointerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

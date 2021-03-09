@@ -13,7 +13,7 @@ public class MqttClient {
     public static org.eclipse.paho.client.mqttv3.MqttClient mqttCon() {
         try {
             if (client == null) {
-                client = new org.eclipse.paho.client.mqttv3.MqttClient("tcp://debian.fritz.box", "Hoftor");
+                client = new org.eclipse.paho.client.mqttv3.MqttClient("tcp://homeassistant.fritz.box", "Hoftor");
             }
             if (!client.isConnected()) {
                 client.connect();
@@ -39,7 +39,7 @@ public class MqttClient {
 
     public static void initMqtt() {
         try {
-            mqttCon().subscribe("stadecken/gate/control", ((topic, message) -> {
+            mqttCon().subscribe("stadecken/gate/gate/control", ((topic, message) -> {
                 User user = new User("HA");
                 switch (message.toString()) {
                     case "OPEN":
