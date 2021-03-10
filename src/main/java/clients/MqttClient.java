@@ -17,6 +17,7 @@ public class MqttClient {
             }
             if (!client.isConnected()) {
                 client.connect();
+                Logger.log("MQTT connection established");
             }
         } catch (MqttSecurityException e) {
             e.printStackTrace();
@@ -40,8 +41,10 @@ public class MqttClient {
     public static void initMqtt() {
         try {
             mqttCon().subscribe("stadecken/gate/gate/control", ((topic, message) -> {
+                String messageStr = message.toString();
+                Logger.log("Received MQTT: " + topic + messageStr);
                 User user = new User("HA");
-                switch (message.toString()) {
+                switch (messageStr) {
                     case "OPEN":
                         Control.openDoor(user);
                         break;

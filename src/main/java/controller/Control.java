@@ -18,6 +18,10 @@ public class Control {
 	public static void init() {
 		Logger.log("Initialisiere");
 		GpioHandler.initializeGpio();
+		tempthread = new TempThread();
+		tempthread.setName("Temperature reader");
+		tempthread.setDaemon(true);
+		tempthread.start();
 		actionthread = new ActionThread(ActionThread.Action.START, false);
 		actionthread.start();
 		initGpioRead();

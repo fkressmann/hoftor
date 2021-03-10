@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import model.User;
 
 public class Logger {
-	private static final SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	public static final SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static Connection con = null;
 	public static LinkedList<String> loglist = new LinkedList<>();
 
@@ -64,6 +64,10 @@ public class Logger {
 		String output = sdf.format(new Date()) + ": </br>" + data;
 		loglist.add(output);
 		System.out.println(output);
+	}
+
+	public static void logToConsole(String data) {
+		System.out.println(sdf.format(new Date()) + data);
 	}
 
 }

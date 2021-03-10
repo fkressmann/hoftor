@@ -100,7 +100,7 @@ public class ActionThread extends Thread {
                     sleep(20);
                 }
                 // Pipsen wenn Objekt durch Tor gefahren
-                GpioHandler.beeper.pulse(700);
+                GpioHandler.beepForMs(700);
                 // Erst schließen, wenn observer auch beendet ist
                 while (at.isAlive()) {
                     sleep(100);
@@ -116,7 +116,7 @@ public class ActionThread extends Thread {
                     }
                     sleep(50);
                 }
-                GpioHandler.beeper.pulse(1500);
+                GpioHandler.beepForMs(1500);
                 Logger.log("Schließe Tor");
                 // GpioHandler.activateLbGpio();
                 automaticActive = false;
@@ -125,7 +125,6 @@ public class ActionThread extends Thread {
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
                 }
-                GpioHandler.beeper.low();
                 if (observe(Status.CLOSED)) {
                     interrupt();
                     return;
@@ -142,7 +141,6 @@ public class ActionThread extends Thread {
                 } else {
                     Logger.log("Tor angehalten: Fernbedienung");
                 }
-                GpioHandler.beeper.low();
                 // Wenn Tor am schließen war und angehalten wurde, geht es wieder auf, also wird
                 // MOVING nicht 0 gesetzt
                 if (gate.isClosing()) {
@@ -170,10 +168,9 @@ public class ActionThread extends Thread {
             // }
         } catch (InterruptedException e) {
             Logger.log("Thread abgebrochen");
-            if (at.isAlive()) {
+            if (at != null && at.isAlive()) {
                 at.interrupt();
             }
-            GpioHandler.beeper.low();
             GpioHandler.deactivateLbGpio();
             interrupt();
         }

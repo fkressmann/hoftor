@@ -13,6 +13,8 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import static controller.Control.gate;
+import static controller.Logger.logToConsole;
+import static controller.Logger.sdf;
 
 public class GpioHandler {
 
@@ -25,15 +27,10 @@ public class GpioHandler {
 	static GpioPinDigitalOutput trigger;
 	public static GpioPinDigitalOutput lbw;
 	static GpioPinDigitalOutput beeper;
-	static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
 	public static void initializeGpio() {
-		Control.tempthread = new TempThread();
-		Control.tempthread.setName("Temperature reader");
-		Control.tempthread.setDaemon(true);
-		Control.tempthread.start();
-
 		gpio = GpioFactory.getInstance();
+
 		trigger = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_05, "Trigger", PinState.LOW);
 		Logger.log("---trigger out registered---");
 		trigger.setShutdownOptions(true, PinState.LOW, PinPullResistance.OFF);
@@ -49,12 +46,11 @@ public class GpioHandler {
 		gateOpened = gpio.provisionDigitalInputPin(RaspiPin.GPIO_03, PinPullResistance.PULL_UP);
 		gateOpened.setShutdownOptions(true);
 		gateOpened.addListener((GpioPinListenerDigital) event -> {
-			// display pin state on console
-			System.out.println(sdf.format(new Date()) + " --> gateOpen PIN STATE CHANGE: " + event.getPin() + " = "
-					+ event.getState());
-			if (event.getState().equals(PinState.LOW)) {
+			if (event.getState().isLow()) {
+				logPinChange("gateOpen", "OPEN");
 				gate.setOpen();
-			} else if (event.getState().equals(PinState.HIGH)) {
+			} else if (event.getState().isHigh()) {
+				logPinChange("gateOpen", "NOT OPEN");
 				gate.setClosing();
 			}
 		});
@@ -63,12 +59,11 @@ public class GpioHandler {
 		gateClosed = gpio.provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_UP);
 		gateClosed.setShutdownOptions(true);
 		gateClosed.addListener((GpioPinListenerDigital) event -> {
-			// display pin state on console
-			System.out.println(sdf.format(new Date()) + " --> gateClosed PIN STATE CHANGE: " + event.getPin()
-					+ " = " + event.getState());
-			if (event.getState().equals(PinState.LOW)) {
+			if (event.getState().isLow()) {
+				logPinChange("gateClosed", "CLOSED");
 				gate.setClosed();
-			} else if (event.getState().equals(PinState.HIGH)) {
+			} else if (event.getState().isHigh()) {
+				logPinChange("gateClosed", "NOT CLOSED");
 				gate.setOpening();
 			}
 		});
@@ -77,24 +72,21 @@ public class GpioHandler {
 		remote = gpio.provisionDigitalInputPin(RaspiPin.GPIO_02, PinPullResistance.PULL_UP);
 		remote.setShutdownOptions(true);
 		remote.addListener((GpioPinListenerDigital) event -> {
-			// display pin state on console
-			System.out.println(sdf.format(new Date()) + " --> remote PIN STATE CHANGE: " + event.getPin() + " = "
-					+ event.getState());
-			if (event.getState().equals(PinState.LOW)) {
+			if (event.getState().isLow()) {
+				logPinChange("remote", "PRESSED");
 				Control.cycleDoor();
-			}
+			} else if (event.getState().isHigh()) logPinChange("remote", "RELEASED");
 		});
 		Logger.log("---remote in registered---");
 
 		door = gpio.provisionDigitalInputPin(RaspiPin.GPIO_12, PinPullResistance.PULL_UP);
 		door.setShutdownOptions(true);
 		door.addListener((GpioPinListenerDigital) event -> {
-			// display pin state on console
-			System.out.println(sdf.format(new Date()) + " --> door PIN STATE CHANGE: " + event.getPin() + " = "
-					+ event.getState());
-			if (event.getState().equals(PinState.LOW)) {
+			if (event.getState().isLow()) {
+				logPinChange("door", "OPEN");
 				Control.door.setOpen();
-			} else if (event.getState().equals(PinState.HIGH)) {
+			} else if (event.getState().isHigh()) {
+				logPinChange("door", "CLOSED");
 				Control.door.setClosed();
 			}
 		});
@@ -103,21 +95,27 @@ public class GpioHandler {
 		lb = gpio.provisionDigitalInputPin(RaspiPin.GPIO_13, PinPullResistance.PULL_UP);
 		lb.setShutdownOptions(true);
 		lb.addListener((GpioPinListenerDigital) event -> {
-			if (event.getState().equals(PinState.LOW)) {
+			if (event.getState().isLow()) {
 				Control.lightbarrier.setOpen();
-				System.out.println(sdf.format(new Date()) + " --> lightbarrier PIN STATE CHANGE: " + event.getPin()
-						+ " = BAD");
-			} else if (event.getState().equals(PinState.HIGH)) {
-				Control.lightbarrier.isClosed();
-				System.out.println(sdf.format(new Date()) + " --> lightbarrier PIN STATE CHANGE: " + event.getPin()
-						+ " = GOOD");
+				logPinChange("lightbarrier", "INTERRUPTED");
+			} else if (event.getState().isHigh()) {
+				Control.lightbarrier.setClosed();
+				logPinChange("lightbarrier", "CLOSED");
 			}
 		});
 		Logger.log("---lightbarrier in registered---");
 	}
 
+	private static void logPinChange(String pin, String message) {
+		logToConsole(" --> " + pin + ": PIN STATE CHANGE: " + message);
+	}
+
 	public static void toggleGateGpio() {
 		trigger.pulse(400, true);
+	}
+
+	public static void beepForMs(int milliseconds) {
+		beeper.pulse(milliseconds);
 	}
 
 	public static void activateLbGpio() {
