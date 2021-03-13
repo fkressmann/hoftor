@@ -17,9 +17,7 @@ public class ActionThread extends Thread {
     public static final int xOBSERVE_CLOSE = 50;
 
     Action action;
-    String log = null;
     boolean fb;
-    boolean stopper = true;
     String user = null;
     ActionThread at;
 
@@ -185,10 +183,12 @@ public class ActionThread extends Thread {
             sleep(500);
             // Wenn Tor garnicht erst los läuft, nach 10 Sek nochmal auslösen
             if (count >= 20) {
-                if (shouldBe == Status.OPEN && !gate.isOpening()) {
+                if (shouldBe == Status.OPEN && !gate.isOpeningInProgress()) {
+                    Logger.log("Tor nicht auf gegangen, erneut auslösen");
                     GpioHandler.toggleGateGpio();
                     count = 0;
-                } else if (shouldBe == Status.CLOSED && !gate.isClosing()) {
+                } else if (shouldBe == Status.CLOSED && !gate.isClosingInProgress()) {
+                    Logger.log("Tor nicht zu gegangen, erneut auslösen");
                     GpioHandler.toggleGateGpio();
                     count = 0;
                 }

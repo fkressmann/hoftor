@@ -74,7 +74,11 @@ public class GpioHandler {
 		remote.addListener((GpioPinListenerDigital) event -> {
 			if (event.getState().isLow()) {
 				logPinChange("remote", "PRESSED");
-				Control.cycleDoor();
+				if (Control.passiveMode) {
+					Logger.log("Mache nichts, passiver Modus ist aktiviert.");
+				} else {
+					Control.cycleDoor();
+				}
 			} else if (event.getState().isHigh()) logPinChange("remote", "RELEASED");
 		});
 		Logger.log("---remote in registered---");
@@ -111,6 +115,7 @@ public class GpioHandler {
 	}
 
 	public static void toggleGateGpio() {
+		Logger.logToConsole("Triggered Remote");
 		trigger.pulse(400, true);
 	}
 

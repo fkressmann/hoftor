@@ -14,6 +14,7 @@ public class Control {
 	public static Sensor door = new Sensor("door");
 	public static Sensor lightbarrier = new Sensor("lb");
 	public static boolean automaticActive = false;
+	public static boolean passiveMode = false;
 
 	public static void init() {
 		Logger.log("Initialisiere");

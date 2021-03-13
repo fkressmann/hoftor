@@ -55,8 +55,16 @@ public class Gate extends Sensor {
         return state == Status.OPENING;
     }
 
+    public boolean isOpeningInProgress() {
+        return state == Status.OPENING || state == Status.OPEN;
+    }
+
     public boolean isClosing() {
         return state == Status.CLOSING;
+    }
+
+    public boolean isClosingInProgress() {
+        return state == Status.CLOSING || state == Status.CLOSED;
     }
 
     public void setStill() {

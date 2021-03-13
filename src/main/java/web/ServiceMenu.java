@@ -62,6 +62,7 @@ public class ServiceMenu extends HttpServlet {
         Control.gate.moving = Boolean.parseBoolean(req.getParameter("moving"));
         Control.door.state = Status.parse(req.getParameter("door"));
         Control.lightbarrier.state = Status.parse(req.getParameter("lb"));
+        Control.passiveMode = Boolean.parseBoolean(req.getParameter("passiveMode"));
         if (req.getParameter("lbW").equals("1")) {
             GpioHandler.activateLbGpio();
         } else {
@@ -69,7 +70,8 @@ public class ServiceMenu extends HttpServlet {
         }
         String message = "Set \r\nGATE to " + Control.gate.state + "\r\n MOVING to "
                 + Control.gate.moving + "\r\n DOOR to " + Control.door.state + "\r\n LB to "
-                + Control.lightbarrier.state;
+                + Control.lightbarrier.state + "\r\n Passive Mode to "
+                + Control.passiveMode;
 
         res.setContentType("text/html;charset=UTF-8");
         res.getWriter().println(generateHTML(message));
@@ -116,7 +118,10 @@ public class ServiceMenu extends HttpServlet {
                 + "  <input type=\"text\" name=\"lb\" class=\"form-control\" id=\"lb\" value=\""
                 + Control.lightbarrier.state + "\" /> <br/>\r\n" + "  <label for=\"lbW\">LB-W:</label>\r\n"
                 + "  <input type=\"text\" name=\"lbW\" class=\"form-control\" id=\"lbW\" value=\""
-                + lbw + "\" /> <br/>\r\n" + "  <input type=\"submit\" name='submit' class=\"btn\" />\r\n"
+                + lbw + "\" /> <br/>\r\n"
+                + " <label for=\"passiveMode\">Passive mode:</label>\r\n"
+                + "  <input type=\"text\" name=\"passiveMode\" class=\"form-control\" id=\"passiveMode\" value=\""
+                + Control.passiveMode + "\" /> <br/>\r\n" + "  <input type=\"submit\" name='submit' class=\"btn\" />\r\n"
                 + "  </form>\r\n" + "</div>\r\n" + "</body>\r\n" + "</html>";
     }
 

@@ -12,6 +12,7 @@ public class MyServletContextListener implements ServletContextListener {
 		GpioHandler.gpio.unexportAll();
 		GpioHandler.gpio.shutdown();
 		Control.tempthread.interrupt();
+		Logger.closeCon();
 		MqttClient.disconnectMqtt();
 	}
 
