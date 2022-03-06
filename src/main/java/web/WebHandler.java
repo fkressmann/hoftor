@@ -16,7 +16,6 @@ import model.User;
 @WebServlet("/Webui")
 public class WebHandler extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    SimpleDateFormat sdf = new SimpleDateFormat("'['HH:mm:ss']'");
 
     public WebHandler() {
         super();
@@ -61,7 +60,7 @@ public class WebHandler extends HttpServlet {
                 + "<lb>" + Control.lightbarrier.state + "</lb>\n"
                 + "<moving>" + Control.gate.isMoving() + "</moving>\n"
                 + "<auto>" + Control.automaticActive + "</auto>\n"
-                + "<locked>" + Control.gate.locked + "</locked>\n"
+                + "<locked>" + Control.gate.isLocked() + "</locked>\n"
                 + "<temp>" + Control.temp + "</temp>\n"
                 + "<status><![CDATA[");
 
@@ -71,12 +70,11 @@ public class WebHandler extends HttpServlet {
         }
         info.append("]]></status>\n</state>\n");
         response.setContentType("text/xml;charset=UTF-8");
-        response.getWriter().println(info.toString());
+        response.getWriter().println(info);
 
     }
 
     protected User getAuth(HttpServletRequest request) {
-        User user = new User();
         String authorization = request.getHeader("X-Remote-User");
         String xforwardedfor = request.getHeader("X-Forwarded-For");
         String sourceip = request.getRemoteAddr();

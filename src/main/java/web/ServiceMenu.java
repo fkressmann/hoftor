@@ -59,7 +59,7 @@ public class ServiceMenu extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
 
         Control.gate.state = Status.parse(req.getParameter("gate"));
-        Control.gate.moving = Boolean.parseBoolean(req.getParameter("moving"));
+        Control.gate.setMoving(Boolean.parseBoolean(req.getParameter("moving")));
         Control.door.state = Status.parse(req.getParameter("door"));
         Control.lightbarrier.state = Status.parse(req.getParameter("lb"));
         Control.passiveMode = Boolean.parseBoolean(req.getParameter("passiveMode"));
@@ -69,7 +69,7 @@ public class ServiceMenu extends HttpServlet {
             GpioHandler.deactivateLbGpio();
         }
         String message = "Set \r\nGATE to " + Control.gate.state + "\r\n MOVING to "
-                + Control.gate.moving + "\r\n DOOR to " + Control.door.state + "\r\n LB to "
+                + Control.gate.isMoving() + "\r\n DOOR to " + Control.door.state + "\r\n LB to "
                 + Control.lightbarrier.state + "\r\n Passive Mode to "
                 + Control.passiveMode;
 
