@@ -20,7 +20,7 @@ public class MqttClient {
                 MqttConnectOptions connOps = new MqttConnectOptions();
                 connOps.setUserName("xxx");
                 connOps.setPassword("xxx".toCharArray());
-                client.connect();
+                client.connect(connOps);
                 initMqtt();
                 Logger.log("MQTT connection established");
             }
