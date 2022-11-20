@@ -3,6 +3,7 @@ package clients;
 import controller.Control;
 import controller.Logger;
 import model.User;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
@@ -16,7 +17,11 @@ public class MqttClient {
                 client = new org.eclipse.paho.client.mqttv3.MqttClient("tcp://homeassistant.fritz.box", "Hoftor");
             }
             if (!client.isConnected()) {
+                MqttConnectOptions connOps = new MqttConnectOptions();
+                connOps.setUserName("xxx");
+                connOps.setPassword("xxx".toCharArray());
                 client.connect();
+                initMqtt();
                 Logger.log("MQTT connection established");
             }
         } catch (MqttSecurityException e) {
