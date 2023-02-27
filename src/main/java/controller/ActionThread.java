@@ -8,21 +8,11 @@ import static controller.Control.*;
 
 public class ActionThread extends Thread {
 
-    public static final int xCLOSE = 0;
-    public static final int xOPEN = 1;
-    public static final int xAUTOCLOSE = 5;
-    public static final int xSTOP = 2;
-    public static final int xSTART = 99;
-    public static final int xOBSERVE_OPEN = 51;
-    public static final int xOBSERVE_CLOSE = 50;
-
     Action action;
     boolean fb;
     String user = null;
     ActionThread at;
 
-    // 0=schließen 1=öffnen 2=anhalten, 5=openAutoClose, 10=überwachen,
-    // 99=initialisieren
     public ActionThread(Action action, boolean fb) {
         this.action = action;
         this.fb = fb;
@@ -56,10 +46,7 @@ public class ActionThread extends Thread {
                 gate.setMoving();
                 sleep(200);
 
-                if (observe(Status.CLOSED)) {
-                    interrupt();
-                    return;
-                }
+                observe(Status.CLOSED);
                 MqttClient.sendMqtt("status", "OFF");
                 // GpioHandler.deactivateLbGpio();
                 interrupt();
@@ -76,10 +63,7 @@ public class ActionThread extends Thread {
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
                 }
-                if (observe(Status.OPEN)) {
-                    interrupt();
-                    return;
-                }
+                observe(Status.OPEN);
                 interrupt();
 
             } else if (action == Action.AUTOCLOSE) {
@@ -123,11 +107,7 @@ public class ActionThread extends Thread {
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
                 }
-                if (observe(Status.CLOSED)) {
-                    interrupt();
-                    return;
-                }
-                // GpioHandler.deactivateLbGpio();
+                observe(Status.CLOSED);
                 MqttClient.sendMqtt("status", "OFF");
                 interrupt();
 
@@ -153,17 +133,10 @@ public class ActionThread extends Thread {
                 System.out.println("ActionThread initialized");
                 interrupt();
             } else if (action == Action.OBSERVE_CLOSE) {
-
-                if (observe(Status.CLOSED)) {
-                    interrupt();
-                }
+                observe(Status.CLOSED);
             } else if (action == Action.OBSERVE_OPEN) {
-
-                if (observe(Status.OPEN)) {
-                    interrupt();
-                }
+                observe(Status.OPEN);
             }
-            // }
         } catch (InterruptedException e) {
             Logger.log("Thread abgebrochen");
             if (at != null && at.isAlive()) {
@@ -174,69 +147,83 @@ public class ActionThread extends Thread {
         }
     }
 
-    synchronized private boolean observe(Status shouldBe) throws InterruptedException {
+    private boolean secondsElapsedSince(int seconds, long since) {
+        long until = since + (seconds * 1000L);
+        long current = System.currentTimeMillis();
+        return current > until;
+    }
+
+    synchronized private void observe(Status shouldBe) throws InterruptedException {
         Logger.log("Observer gestartet, soll Status: " + shouldBe);
-        int count = 0;
-        int actions = 0;
+        int correctionsExecuted = 0;
+        long startTime = System.currentTimeMillis();
         while (gate.state != shouldBe) {
-            count++;
-            sleep(500);
-            // Wenn Tor garnicht erst los läuft, nach 10 Sek nochmal auslösen
-            if (count >= 20) {
-                if (shouldBe == Status.OPEN && !gate.isOpeningInProgress()) {
-                    Logger.log("Tor nicht auf gegangen, erneut auslösen");
-                    GpioHandler.toggleGateGpio();
-                    count = 0;
-                } else if (shouldBe == Status.CLOSED && !gate.isClosingInProgress()) {
-                    Logger.log("Tor nicht zu gegangen, erneut auslösen");
-                    GpioHandler.toggleGateGpio();
-                    count = 0;
-                }
+            if (correctionsExecuted >= 5) {
+                Logger.log("5 Korrekturen erfolglos, breche ab. Manuelle Korrektur erforderlich.");
+                interrupt();
             }
-            // Wenn eine Minute rum und Tor ist nicht angekommen
-            if (count >= 120) {
-                count = 0;
+            sleep(500);
+
+            // Wenn 45 sek rum und Tor ist nicht angekommen
+            if (secondsElapsedSince(45, startTime)) {
                 if (shouldBe == Status.OPEN) {
-                    Logger.log("Tor ist nicht offen angekommen. Keine Aktion ausgelöst. Aktion Abgebrochen.");
+                    Logger.log(
+                        "Tor ist nicht offen angekommen. Keine Aktion ausgelöst. Aktion Abgebrochen.");
                     Logger.logAccessSQL(new User("SYSTEM"),
-                            "Door open not arrived. Actual Temp: " + Control.temp);
+                        "Door open not arrived. Actual Temp: " + Control.temp);
                     gate.setStill();
-                    return true;
-                } else if (actions < 5) {
-                    actions++;
+                    interrupt();
+                } else if (shouldBe == Status.CLOSED) {
+                    correctionsExecuted++;
                     Logger.log("Fehler erkannt. Tor nicht angekommen, neu ausgelöst.");
                     Logger.logAccessSQL(new User("SYSTEM"), "Observer took action beforehand!!");
                     GpioHandler.toggleGateGpio();
+                    // reset timer
+                    startTime = System.currentTimeMillis();
+                    continue;
                 } else {
-                    Logger.log("5 Korrekturen erfolglos, breche ab. Manuelle Korrektur erforderlich.");
+                    Logger.log(
+                        "5 Korrekturen erfolglos, breche ab. Manuelle Korrektur erforderlich.");
                     Logger.logAccessSQL(new User("SYSTEM"), "Took 5 actions, stopping!!");
-                    return true;
+                    interrupt();
+                }
+            }
+
+            // Wenn Tor gar nicht erst losläuft, nach 7 Sek nochmal auslösen
+            if (secondsElapsedSince(7, startTime)) {
+                if ((shouldBe == Status.CLOSED && gate.isOpen())
+                    || (shouldBe == Status.OPEN && gate.isClosed())) {
+                    Logger.log("Tor nicht los gelaufen, erneut auslösen");
+                    GpioHandler.toggleGateGpio();
+                    correctionsExecuted++;
+                    // reset timer
+                    startTime = System.currentTimeMillis();
                 }
             }
         }
-        System.out.println("gate = " + shouldBe);
-        if (shouldBe == Status.CLOSED) {
-            count = 500;
-        } else {
-            count = 200;
-        }
-        for (int i = 1; i <= count; i++) {
-            if (gate.state != shouldBe) {
 
+        // Tor it jetzt in gewünschter Position, warte ein wenig zur Sicherheit
+        System.out.println("gate = " + shouldBe);
+        long waitUntil = System.currentTimeMillis();
+        if (shouldBe == Status.CLOSED) {
+            waitUntil += 32_000;
+        } else {
+            waitUntil += 15_000;
+        }
+        while (System.currentTimeMillis() < waitUntil) {
+            if (gate.state != shouldBe) {
                 GpioHandler.toggleGateGpio();
                 sleep(1000);
                 GpioHandler.toggleGateGpio();
                 Logger.log("Fehler erkannt. Korrektur ausgeführt, starte Rekursion");
                 Logger.logAccessSQL(new User("SYSTEM"), "Observer took action!!");
                 observe(shouldBe);
-
             }
             sleep(50);
         }
 
         Logger.log("Alles okay, beende Observer");
         gate.setStill();
-        return false;
     }
 
     synchronized private void sleep(int time) throws InterruptedException {

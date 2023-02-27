@@ -61,7 +61,9 @@ public class Control {
 	public static void cycleDoor() {
 		User user = User.remote();
 		String action;
-		if (gate.isClosed() && !gate.isMoving() && !actionthread.isAlive()) {
+		if (door.isOpen() || lightbarrier.isOpen()) {
+			Logger.log("Türchen oder Lichtschranke offen, ignoriere Fernbedienung");
+		} else if (gate.isClosed() && !gate.isMoving() && !actionthread.isAlive()) {
 			openDoor(user);
 		} else if (!gate.isClosed() && !gate.isMoving() && !actionthread.isAlive()) {
 			if (gate.isClosing()) {
@@ -107,7 +109,7 @@ public class Control {
 			Logger.logAccessSQL(user, "openDoor: fail - gate locked");
 			return false;
 		}
-		if (lightbarrier.isOpen() && !user.getName().equals("felix")) {
+		if (lightbarrier.isOpen()) {
 			Logger.log("Kein Signal von Lichtschranke, Automatik kann nicht gestartet werden.");
 			Logger.logAccessSQL(user, "openAutoClose: No LB signal, not invoked");
 			return false;

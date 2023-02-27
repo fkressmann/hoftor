@@ -13,7 +13,8 @@ repositories {
 }
 
 war {
-    archiveName = 'Hoftor.war'
+    archiveFileName = 'Hoftor.war'
+    destinationDirectory = file("$buildDir/../out")
 }
 
 dependencies {
