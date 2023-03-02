@@ -143,6 +143,7 @@ public class ActionThread extends Thread {
                 at.interrupt();
             }
             GpioHandler.deactivateLbGpio();
+            gate.setStill();
             interrupt();
         }
     }
@@ -202,24 +203,20 @@ public class ActionThread extends Thread {
             }
         }
 
-        // Tor it jetzt in gewünschter Position, warte ein wenig zur Sicherheit
-        System.out.println("gate = " + shouldBe);
-        long waitUntil = System.currentTimeMillis();
+        // Tor it jetzt in gewünschter Position, warte beim Schließen ein wenig zur Sicherheit
         if (shouldBe == Status.CLOSED) {
-            waitUntil += 32_000;
-        } else {
-            waitUntil += 15_000;
-        }
-        while (System.currentTimeMillis() < waitUntil) {
-            if (gate.state != shouldBe) {
-                GpioHandler.toggleGateGpio();
-                sleep(1000);
-                GpioHandler.toggleGateGpio();
-                Logger.log("Fehler erkannt. Korrektur ausgeführt, starte Rekursion");
-                Logger.logAccessSQL(new User("SYSTEM"), "Observer took action!!");
-                observe(shouldBe);
+            long waitUntil = System.currentTimeMillis() + 32_000;
+            while (System.currentTimeMillis() < waitUntil) {
+                if (gate.state != shouldBe) {
+                    GpioHandler.toggleGateGpio();
+                    sleep(1000);
+                    GpioHandler.toggleGateGpio();
+                    Logger.log("Fehler erkannt. Korrektur ausgeführt, starte Rekursion");
+                    Logger.logAccessSQL(new User("SYSTEM"), "Observer took action!!");
+                    observe(shouldBe);
+                }
+                sleep(50);
             }
-            sleep(50);
         }
 
         Logger.log("Alles okay, beende Observer");
