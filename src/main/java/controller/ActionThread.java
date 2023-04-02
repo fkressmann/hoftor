@@ -37,14 +37,9 @@ public class ActionThread extends Thread {
 
                 Logger.log("Tor wird geschlossen");
                 // GpioHandler.activateLbGpio();
-                if (gate.isOpening()) {
-                    gate.setClosing();
-                }
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
                 }
-                gate.setMoving();
-                sleep(200);
 
                 observe(Status.CLOSED);
                 MqttClient.sendMqtt("status", "OFF");
@@ -58,7 +53,6 @@ public class ActionThread extends Thread {
                 } else {
                     Logger.log("Tor wird geöffnet");
                 }
-                gate.setMoving();
                 MqttClient.sendMqtt("status", "ON");
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
@@ -69,7 +63,6 @@ public class ActionThread extends Thread {
             } else if (action == Action.AUTOCLOSE) {
 
                 Logger.log("Tor wird geöffnet (auto close)");
-                gate.setMoving();
                 MqttClient.sendMqtt("status", "ON");
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
@@ -81,14 +74,15 @@ public class ActionThread extends Thread {
                 while (lightbarrier.isClosed()) {
                     sleep(20);
                 }
-                // Pipsen wenn Objekt durch Tor gefahren
+                Logger.log("Bewegung erkannt");
+                // Piepsen, wenn Objekt durch Tor gefahren
                 GpioHandler.beepForMs(700);
                 // Erst schließen, wenn observer auch beendet ist
                 while (at.isAlive()) {
                     sleep(100);
                 }
                 // Wenn
-                Logger.log("Bewegung erkannt, schließe in 10 sek");
+                Logger.log("schließe in 10 sek");
                 sleep(2000);
                 for (int i = 1; i <= 170; i++) {
                     if (lightbarrier.isOpen()) {
@@ -103,7 +97,6 @@ public class ActionThread extends Thread {
                 // GpioHandler.activateLbGpio();
                 automaticActive = false;
                 sleep(200);
-                gate.setMoving();
                 if (!fb) {
                     GpioHandler.toggleGateGpio();
                 }
@@ -119,7 +112,7 @@ public class ActionThread extends Thread {
                 } else {
                     Logger.log("Tor angehalten: Fernbedienung");
                 }
-                // Wenn Tor am schließen war und angehalten wurde, geht es wieder auf, also wird
+                // Wenn Tor am Schließen war und angehalten wurde, geht es wieder auf, also wird
                 // MOVING nicht 0 gesetzt
                 if (gate.isClosing()) {
                     gate.setOpening();
@@ -129,7 +122,6 @@ public class ActionThread extends Thread {
                 interrupt();
 
             } else if (action == Action.START) {
-
                 System.out.println("ActionThread initialized");
                 interrupt();
             } else if (action == Action.OBSERVE_CLOSE) {

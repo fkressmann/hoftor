@@ -1,8 +1,5 @@
 package controller;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
@@ -14,7 +11,6 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import static controller.Control.gate;
 import static controller.Logger.logToConsole;
-import static controller.Logger.sdf;
 
 public class GpioHandler {
 
@@ -77,7 +73,7 @@ public class GpioHandler {
 				if (Control.passiveMode) {
 					Logger.log("Mache nichts, passiver Modus ist aktiviert.");
 				} else {
-					Control.cycleDoor();
+					Control.onRemoteTriggered();
 				}
 			} else if (event.getState().isHigh()) logPinChange("remote", "RELEASED");
 		});

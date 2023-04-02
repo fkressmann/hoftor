@@ -39,10 +39,22 @@ public class Gate extends Sensor {
         sendState();
     }
 
+    @Override
+    public void setOpen() {
+        moving = false;
+        super.setOpen();
+    }
+
     public void setClosing() {
         state = Status.CLOSING;
         moving = true;
         sendState();
+    }
+
+    @Override
+    public void setClosed() {
+        moving = false;
+        super.setClosed();
     }
 
     public void lock() {
